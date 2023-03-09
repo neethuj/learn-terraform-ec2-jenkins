@@ -18,3 +18,18 @@ variable "public_subnet_tag" {
   description = "Tag for the subnet"
   default     = "my-public-subnet"
 }
+
+variable "igw_tag" {
+  description = "Tag for the igw"
+  default     = "my-igw"
+}
+
+variable "igw_rt_tag" {
+  description = "Tag for the InternetGW RT"
+  default     = "my-igw-rt"
+}
+
+variable "security_group_name" {
+  description = "Tag for the security group"
+  default     = "jenkins-security-group"
+}
