@@ -23,3 +23,13 @@ output "security_group_id" {
   description = "id of the jenkins SG"
   value       = aws_security_group.jenkins_security_group.id
 }
+
+output "ec2_role_arn" {
+  description = "arn of ec2 role"
+  value       = aws_iam_role.ec2_role.arn
+}
+
+output "ec2_policy_arn" {
+  description = "arn of ec2 policy"
+  value       = aws_iam_policy.ec2_policy.arn
+}

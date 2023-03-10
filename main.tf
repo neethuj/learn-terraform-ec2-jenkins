@@ -89,3 +89,93 @@ resource "aws_security_group" "jenkins_security_group" {
     Name = var.security_group_name
   }
 }
+
+# IAM Policy
+resource "aws_iam_policy" "ec2_policy" {
+  name        = var.ec2_policy_name
+  path        = "/"
+  description = "Policy for s3 Read and Get"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "s3:Get*",
+          "s3:List*",
+        ]
+        Effect   = "Allow"
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+# IAM Role
+resource "aws_iam_role" "ec2_role" {
+  name = var.ec2_role_name
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Sid    = ""
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
+# Attach policy to role
+resource "aws_iam_policy_attachment" "ec2_role_policy_attach" {
+  name       = "ec2-role-attachment"
+  roles      = [aws_iam_role.ec2_role.name]
+  policy_arn = aws_iam_policy.ec2_policy.arn
+}
+
+# IAM Instance Profile
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+  name = var.ec2_instance_profile_name
+  role = aws_iam_role.ec2_role.name
+}
+
+# S3 Bucket
+resource "aws_s3_bucket" "jenkins_backend_bucket" {
+  bucket = var.bucket_name
+
+  tags = {
+    Name = var.bucket_name
+  }
+}
+
+resource "aws_s3_bucket_acl" "jenkinsbucketacl" {
+  bucket = var.bucket_name
+  acl    = "private"
+}
+
+# Place holder template for future improvements
+data "template_file" "init" {
+  template = file("./user-data.tpl")
+  vars = {
+    jenkins-port = "8080"
+  }
+}
+
+# EC2 Instance
+resource "aws_instance" "ec2_instance" {
+  ami                  = var.ami
+  instance_type        = var.instance_type
+  key_name             = var.ssh_key_name
+  security_groups      = [aws_security_group.jenkins_security_group.id]
+  subnet_id            = aws_subnet.public_subnet.id
+  iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
+  user_data            = var.ec2_user_data
+  # user-data            = "${data.template_file.init.rendered}"
+  tags = {
+    Name = var.ec2_tag
+  }
+}
